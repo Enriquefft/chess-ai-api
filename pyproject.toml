@@ -1,0 +1,44 @@
+[tool.poetry]
+name = "hermes-retail-backend"
+version = "0.1.0"
+description = "FastAPI backend for the Hermes Retail product."
+authors = ["Enrique <enrique.flores@utec.edu.pe>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.12"
+fastapi = "^0.111.0"
+uvicorn = "^0.29.0"
+# stockfish = "^3.28.0"
+chess = "^1.10.0"
+openai = "^1.37.1"
+
+[tool.poetry.group.dev.dependencies]
+poethepoet = "^0.24.4"
+pytest = "^7.4.3"
+ruff = "^0.2"
+
+[tool.poe.tasks]
+test = "pytest"
+lint = "ruff check"
+_build = "poetry build"
+build = ["lint", "test", "_build"]
+export = "poetry export --without-hashes --format=requirements.txt --all-extras --output requirements.txt"
+run = "fastapi run"
+
+[tool.ruff.lint]
+select = ["ALL"]
+ignore = ["D203", "D212", "FA", "ANN101"]
+
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["E402"]
+"**/{tests,docs,tools}/*" = ["E402", "S101"]
+
+[tool.pyright]
+typeCheckingMode = "strict"
+pythonVersion = "3.12"
+verboseOutput = true
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
