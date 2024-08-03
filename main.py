@@ -1,14 +1,18 @@
-"""Hermes Retail backend main module."""
+"""Chess api main module."""
 
-import re
-from enum import Enum
-from typing import Annotated
+from typing import Literal, Optional
 
-from fastapi import FastAPI, Query
+from chess import BLACK, WHITE, Move
+from fastapi import FastAPI, HTTPException
 
-from ai import get_response
+from Game import Game
 
 app = FastAPI()
+
+
+Color = Literal["white", "black"]
+
+user_games: dict[str, Game] = {}
 
 
 @app.get("/health")
@@ -17,54 +21,30 @@ async def health() -> dict[str, str]:
     return {"Hello": "World"}
 
 
-class ChessPiece(str, Enum):
-    """Chess piece enumeration."""
+@app.get("/start")
+async def start(
+    user_id: str,
+    user_color: Color,
+) -> Optional[Move]:
+    """Start a new game for the user."""
+    ch_color = WHITE if user_color == "white" else BLACK
+    user_games[user_id] = Game(ch_color)
+    if ch_color == BLACK:
+        return user_games[user_id].play_engine_move()
+    return None
 
-    KING = "K"
-    QUEEN = "Q"
-    ROOK = "R"
-    BISHOP = "B"
-    KNIGHT = "N"
-    PAWN = "P"
-    PAWN_WITH_PASSANT = "PP"
 
+@app.get("/play")
+async def play_user(
+    user_id: str,
+    move: str,
+) -> Move:
+    """Play a move for the user and get the engine move."""
+    if user_id not in user_games:
+        raise HTTPException(status_code=404, detail="User not found")
+    user_games[user_id].play_human_move(move)
+    bot_move = user_games[user_id].play_engine_move()
 
-@app.get("/route/k-moves")
-async def get_k_moves(
-    board: Annotated[
-        list[list[ChessPiece]],
-        "Current state of the chess board",
-    ],
-    k_moves: Annotated[
-        int,
-        Query(
-            title="k moves",
-            description="Number of moves to find",
-        ),
-    ],
-) -> list[str]:
-    """Find the best k moves for the current state of the chess board."""
-    # Convert the board state to a human-readable format
-    board_state = "\n".join(
-        " ".join(piece.value if piece else "." for piece in row) for row in board
-    )
-
-    # Create the user message for the AI query
-    user_message = (
-        f"Given the current state of the chess board:\n{board_state}\n\n"
-        f"Return the best {k_moves} moves in standard chess notation. Only list the moves, nothing else."
-    )
-
-    # Get the response from the AI
-    response = get_response(user_message)
-
-    # Post-process the response to ensure only valid chess moves are returned
-    if response:
-        # Regular expression pattern to match standard chess notation moves
-        move_pattern = re.compile(
-            r"([KQBNRP]?[a-h]?[1-8]?x?[a-h][1-8](?:=[QRBN])?|O-O(?:-O)?)",
-        )
-        moves = move_pattern.findall(response)
-        return moves[:k_moves]
-
-    return []
+    if bot_move is None:
+        raise HTTPException(status_code=404, detail="Bot move not found")
+    return bot_move
