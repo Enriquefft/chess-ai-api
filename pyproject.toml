@@ -11,24 +11,30 @@ fastapi = "^0.111.0"
 uvicorn = "^0.29.0"
 # stockfish = "^3.28.0"
 chess = "^1.10.0"
-openai = "^1.37.1"
+pyright = "^1.1.377"
+ruff = "0.6.1"
 
 [tool.poetry.group.dev.dependencies]
 poethepoet = "^0.24.4"
 pytest = "^7.4.3"
-ruff = "^0.2"
+pyright = "^1.1.373"
 
 [tool.poe.tasks]
 test = "pytest"
-lint = "ruff check"
+format = "ruff format"
+_ruff = "ruff check"
+_pyright = "pyright"
+lint = ["_pyright"]
+
 _build = "poetry build"
 build = ["lint", "test", "_build"]
 export = "poetry export --without-hashes --format=requirements.txt --all-extras --output requirements.txt"
+
 run = "fastapi run"
 
 [tool.ruff.lint]
 select = ["ALL"]
-ignore = ["D203", "D212", "FA", "ANN101"]
+ignore = ["D203", "D212", "FA", "ANN101", "COM812", "ISC001"]
 
 [tool.ruff.lint.per-file-ignores]
 "__init__.py" = ["E402"]

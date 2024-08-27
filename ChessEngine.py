@@ -8,6 +8,15 @@ import chess
 OPENING_PHASE_LIMIT = 10
 
 
+PIECE_VALUES: dict[chess.PieceType, float] = {
+    chess.PAWN: 1,
+    chess.ROOK: 5.1,
+    chess.BISHOP: 3.33,
+    chess.KNIGHT: 3.2,
+    chess.QUEEN: 8.8,
+}
+
+
 def evaluate_board(board: chess.Board, color: chess.Color) -> float:
     """
     Evaluate the board using various heuristics.
@@ -23,36 +32,25 @@ def evaluate_board(board: chess.Board, color: chess.Color) -> float:
 
     """
 
-    def square_res_points(square: chess.Square) -> float:
-        piece_value = 0
+    def piece_value(square: chess.Square) -> float:
         piece = board.piece_type_at(square)
-        if piece == chess.PAWN:
-            piece_value = 1
-        elif piece == chess.ROOK:
-            piece_value = 5.1
-        elif piece == chess.BISHOP:
-            piece_value = 3.33
-        elif piece == chess.KNIGHT:
-            piece_value = 3.2
-        elif piece == chess.QUEEN:
-            piece_value = 8.8
-
-        return piece_value if board.color_at(square) == color else -piece_value
+        value = PIECE_VALUES[piece] if piece else 0
+        return value if board.color_at(square) == color else -value
 
     def mate_opportunity() -> float:
         if not board.legal_moves:
             return -999 if board.turn == color else 999
         return 0
 
-    def opening() -> float:
+    def opening_modifier() -> float:
         if board.fullmove_number < OPENING_PHASE_LIMIT:
             modifier = 1 / 30 * board.legal_moves.count()
             return modifier if board.turn == color else -modifier
         return 0
 
-    score = sum(square_res_points(square) for square in chess.SQUARES)
+    score = sum(piece_value(square) for square in chess.SQUARES)
     score += mate_opportunity()
-    score += opening()
+    score += opening_modifier()
     score += 0.001 * secrets.randbelow(1000) / 1000.0
 
     return score
@@ -112,10 +110,8 @@ def minimax(
     return new_candidate if depth > 1 else best_move
 
 
-
 def get_best_move(
     board_fen: str,
-    color: chess.Color,
     max_depth: int,
 ) -> Optional[chess.Move]:
     """
@@ -123,16 +119,24 @@ def get_best_move(
 
     Args:
     ----
-        board_fen (str): The current state of the chess board in fen format.
-            ("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1")
-        color (chess.Color): The color of the player to move.
+        board_fen (str): The current state of the chess board in FEN format.
+            A FEN string (e.g.,
+            ``rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1``)
+            consists of several parts:
+            - The board part (:func:`~chess.Board.board_fen()`),
+            - The active color (:data:`~chess.Board.turn`),
+            - The castling availability (:data:`~chess.Board.castling_rights`),
+            - The en passant target square (:data:`~chess.Board.ep_square`),
+            - The halfmove clock (:data:`~chess.Board.halfmove_clock`),
+            - The fullmove number (:data:`~chess.Board.fullmove_number`).
+
         max_depth (int): The maximum depth to search.
 
     Returns:
     -------
-        Optional[chess.Move]: The best move determined by the function.
-
+        Optional[chess.Move]: The best move determined by the function, or
+        `None` if no valid move is found.
 
     """
     board = chess.Board(fen=board_fen)
-    return cast(chess.Move, minimax(board, 1, max_depth, color))
+    return cast(chess.Move, minimax(board, 1, max_depth, board.turn))
