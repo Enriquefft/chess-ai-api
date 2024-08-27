@@ -39,7 +39,8 @@ def evaluate_board(board: chess.Board, color: chess.Color) -> float:
         return value if board.color_at(square) == color else -value
 
     def mate_opportunity() -> float:
-        if not board.legal_moves:
+        if not board.legal_moves and board.is_checkmate():
+            # Stalemate does not count as a win or loss
             return -999 if board.turn == color else 999
         return 0
 
@@ -146,4 +147,4 @@ def get_best_move(
 
     """
     board = chess.Board(fen=board_fen)
-    return cast(chess.Move, minimax(board, 1, max_depth, board.turn))
+    return cast(chess.Move | None, minimax(board, 1, max_depth, board.turn))
