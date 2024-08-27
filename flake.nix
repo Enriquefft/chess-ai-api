@@ -1,5 +1,5 @@
 {
-  description = "Flake for the Hermes retail product.";
+  description = "Flake for the python environment.";
 
   inputs = {
     nixpkgs.url = "nixpkgs/nixpkgs-unstable";
