@@ -14,6 +14,7 @@ PIECE_VALUES: dict[chess.PieceType, float] = {
     chess.BISHOP: 3.33,
     chess.KNIGHT: 3.2,
     chess.QUEEN: 8.8,
+    chess.KING: 0,
 }
 
 
@@ -92,9 +93,9 @@ def minimax(
 
         if depth % 2 != 0:  # Maximizing (engine's turn)
             if value > new_candidate:
+                new_candidate = value
                 if depth == 1:
                     best_move = move
-                new_candidate = value
         elif value < new_candidate:
             new_candidate = value
 
