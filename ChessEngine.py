@@ -115,7 +115,7 @@ def get_best_move(
     max_depth: int,
 ) -> Optional[chess.Move]:
     """
-    Get the best move for a given board state, color, and search depth.
+    Get the best move for a given board state and search depth.
 
     Args:
     ----

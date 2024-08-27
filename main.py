@@ -1,8 +1,7 @@
 """Chess api main module."""
 
-from typing import Annotated, Literal, Optional
+from typing import Annotated, Optional
 
-from chess import Move
 from fastapi import FastAPI, Query
 
 from ChessEngine import get_best_move
@@ -15,8 +14,6 @@ async def health() -> dict[str, str]:
     """Health check endpoint."""
     return {"Hello": "World"}
 
-
-Color = Literal["white", "black"]
 
 FEN_REGEX = (
     "^([rnbqkpRNBQKP1-8]{1,8}/){7}[rnbqkpRNBQKP1-8]{1,8} "
@@ -34,6 +31,7 @@ async def get_move(
             pattern=FEN_REGEX,
         ),
     ],
-) -> Optional[Move]:
-    """Play a move for the user and get the engine move."""
-    return get_best_move(fen, depth)
+) -> Optional[str]:
+    """Get the best engine move in ICI format."""
+    best_move = get_best_move(fen, depth)
+    return best_move.uci() if best_move is not None else None
