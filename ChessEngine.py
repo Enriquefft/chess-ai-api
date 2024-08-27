@@ -43,6 +43,11 @@ def evaluate_board(board: chess.Board, color: chess.Color) -> float:
             return -999 if board.turn == color else 999
         return 0
 
+    def check_modifier() -> float:
+        if board.is_check():
+            return -50 if board.turn == color else 50
+        return 0
+
     def opening_modifier() -> float:
         if board.fullmove_number < OPENING_PHASE_LIMIT:
             modifier = 1 / 30 * board.legal_moves.count()
@@ -51,6 +56,7 @@ def evaluate_board(board: chess.Board, color: chess.Color) -> float:
 
     score = sum(piece_value(square) for square in chess.SQUARES)
     score += mate_opportunity()
+    score += check_modifier()
     score += opening_modifier()
     score += 0.001 * secrets.randbelow(1000) / 1000.0
 

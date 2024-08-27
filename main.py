@@ -2,7 +2,7 @@
 
 from typing import Annotated, Optional
 
-from fastapi import FastAPI, Query
+from fastapi import FastAPI, Query, HTTPException
 
 from ChessEngine import get_best_move
 
@@ -21,9 +21,14 @@ FEN_REGEX = (
 )
 
 
-@app.get("/move/{depth}")
+@app.get("/move/")
 async def get_move(
-    depth: int,
+    level: Annotated[
+        str,
+        Query(
+            description="(facil, medio, avanzado)",
+        ),
+    ],
     fen: Annotated[
         str,
         Query(
@@ -33,5 +38,16 @@ async def get_move(
     ],
 ) -> Optional[str]:
     """Get the best engine move in ICI format."""
-    best_move = get_best_move(fen, depth)
+    
+    
+    depth_levels = {
+        'facil': 2,
+        'medio': 5,
+        'avanzado': 7
+    }
+
+    if level not in depth_levels:
+        raise HTTPException(status_code=400, detail="Nivel no reconocido")
+
+    best_move = get_best_move(fen, depth_levels[level])
     return best_move.uci() if best_move is not None else None
